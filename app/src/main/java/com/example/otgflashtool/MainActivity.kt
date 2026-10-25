@@ -15,23 +15,26 @@ import kotlin.concurrent.thread
 class MainActivity : AppCompatActivity() {
 
     private lateinit var etScatterPath: EditText
+    private lateinit var etDaPath: EditText
     private lateinit var containerPartitions: LinearLayout
     private lateinit var tvStatusLog: TextView
     private lateinit var progressBar: ProgressBar
     private lateinit var usbManager: UsbManager
 
-    private val MTK_VENDOR_ID = 3725 // 0x0E8D MediaTek
+    // Daftar Vendor ID USB Chipset MediaTek (Universal)
+    private val MTK_VENDOR_IDS = listOf(0x0E8D, 0x0BB4, 0x17EF)
+    
     private val PICK_SCATTER_FILE = 1001
+    private val PICK_DA_FILE = 1002
 
-    // Byte Handshake Protokol BROM MTK
     private val BROM_START_CMD = byteArrayOf(0xA0.toByte(), 0x0A.toByte(), 0x50.toByte(), 0x05.toByte())
-    private val BROM_ACK_CMD = byteArrayOf(0x5F.toByte(), 0xF5.toByte(), 0xAF.toByte(), 0xFA.toByte())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         etScatterPath = findViewById(R.id.et_scatter_path)
+        etDaPath = findViewById(R.id.et_da_path)
         containerPartitions = findViewById(R.id.container_partitions)
         tvStatusLog = findViewById(R.id.tv_status_log)
         progressBar = findViewById(R.id.progress_bar)
@@ -42,17 +45,26 @@ class MainActivity : AppCompatActivity() {
             startActivityForResult(intent, PICK_SCATTER_FILE)
         }
 
+        findViewById<Button>(R.id.btn_choose_da).setOnClickListener {
+            val intent = Intent(Intent.ACTION_GET_CONTENT).apply { type = "*/*" }
+            startActivityForResult(intent, PICK_DA_FILE)
+        }
+
         findViewById<Button>(R.id.btn_download).setOnClickListener {
-            startFlashingThread()
+            startUniversalFlashingThread()
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == PICK_SCATTER_FILE && resultCode == Activity.RESULT_OK) {
-            data?.data?.let { uri ->
+        if (resultCode == Activity.RESULT_OK && data?.data != null) {
+            val uri = data.data!!
+            if (requestCode == PICK_SCATTER_FILE) {
                 etScatterPath.setText(uri.path)
                 parseScatterFile(uri)
+            } else if (requestCode == PICK_DA_FILE) {
+                etDaPath.setText(uri.path)
+                tvStatusLog.text = "Status: DA File Selected."
             }
         }
     }
@@ -103,28 +115,29 @@ class MainActivity : AppCompatActivity() {
         containerPartitions.addView(row)
     }
 
-    private fun startFlashingThread() {
+    private fun startUniversalFlashingThread() {
         val deviceList = usbManager.deviceList
         var mtkDevice: UsbDevice? = null
 
+        // Pencarian Perangkat MTK Universal berdasarkan Vendor ID
         for (device in deviceList.values) {
-            if (device.vendorId == MTK_VENDOR_ID) {
+            if (MTK_VENDOR_IDS.contains(device.vendorId)) {
                 mtkDevice = device
                 break
             }
         }
 
         if (mtkDevice == null) {
-            tvStatusLog.text = "Status: Vivo Y12 Not Found! (Hold Vol Up+Down & connect OTG)"
+            tvStatusLog.text = "Status: MTK Device Not Found! (Hold Vol Up/Down & Connect OTG)"
             return
         }
 
-        tvStatusLog.text = "Connecting to BROM Port [VID: ${mtkDevice.vendorId}]..."
+        tvStatusLog.text = "Detected MTK Device [VID: ${mtkDevice.vendorId}, PID: ${mtkDevice.productId}]..."
 
         thread {
             val connection = usbManager.openDevice(mtkDevice)
             if (connection == null) {
-                runOnUiThread { tvStatusLog.text = "Status: Permission Denied / Open Failed!" }
+                runOnUiThread { tvStatusLog.text = "Status: USB Permission Denied!" }
                 return@thread
             }
 
@@ -143,17 +156,16 @@ class MainActivity : AppCompatActivity() {
             }
 
             if (endpointIn != null && endpointOut != null) {
-                // Step 1: Send BROM Handshake Sequence
                 val bytesSent = connection.bulkTransfer(endpointOut, BROM_START_CMD, BROM_START_CMD.size, 1000)
                 val buffer = ByteArray(4)
                 val bytesRead = connection.bulkTransfer(endpointIn, buffer, buffer.size, 1000)
 
                 runOnUiThread {
                     if (bytesSent > 0 && bytesRead > 0) {
-                        tvStatusLog.text = "Status: BROM Handshake OK! Initializing DA..."
+                        tvStatusLog.text = "Status: Universal MTK Handshake OK! Ready for DA payload."
                         progressBar.progress = 30
                     } else {
-                        tvStatusLog.text = "Status: Handshake Failed! Check SLA/DA Auth."
+                        tvStatusLog.text = "Status: BROM Handshake Timeout / SLA Protection active."
                     }
                 }
             }

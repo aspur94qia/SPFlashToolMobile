@@ -21,11 +21,33 @@
         </LinearLayout>
     </HorizontalScrollView>
 
+    <!-- Column DA File Path -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="8dp">
+        android:layout_marginTop="4dp">
+        <EditText
+            android:id="@+id/et_da_path"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Download Agent (DA File)"
+            android:textSize="12sp"
+            android:focusable="false" />
+        <Button
+            android:id="@+id/btn_choose_da"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="DA File" />
+    </LinearLayout>
+
+    <!-- Column Scatter Path -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="4dp">
         <EditText
             android:id="@+id/et_scatter_path"
             android:layout_width="0dp"
@@ -38,7 +60,7 @@
             android:id="@+id/btn_choose_scatter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Choose" />
+            android:text="Scatter" />
     </LinearLayout>
 
     <LinearLayout
