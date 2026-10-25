@@ -133,7 +133,7 @@ class MainActivity : AppCompatActivity() {
         }
         val btnSelectFile = Button(this).apply {
             text = if (info.fileName.isNotEmpty()) info.fileName else "Select File"
-            textSize = 10sp
+            textSize = 10f
             setOnClickListener {
                 val intent = Intent(Intent.ACTION_GET_CONTENT).apply { type = "*/*" }
                 startActivityForResult(intent, PICK_IMG_FILE_BASE + index)
@@ -186,14 +186,12 @@ class MainActivity : AppCompatActivity() {
             }
 
             if (endpointIn != null && endpointOut != null) {
-                // 1. Handshake awal BROM
                 val bromHandshake = byteArrayOf(0xA0.toByte(), 0x0A.toByte(), 0x50.toByte(), 0x05.toByte())
                 connection.bulkTransfer(endpointOut, bromHandshake, bromHandshake.size, 1000)
 
                 runOnUiThread { tvStatusLog.text = "Status: BROM Connected. Starting Data Transfer..." }
 
-                // 2. Loop penulisan data binary tiap partisi
-                val chunkSize = 65536 // 64 KB per chunk transfer
+                val chunkSize = 65536
                 val buffer = ByteArray(chunkSize)
 
                 for (part in partitionList) {
