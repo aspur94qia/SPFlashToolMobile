@@ -3,367 +3,172 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F0F0F0"
-    android:padding="8dp">
+    android:background="#121212"
+    android:padding="16dp">
 
-    <!-- Top Navigation Tabs -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:background="#E0E0E0"
-        android:padding="4dp">
-
+        android:background="#1E1E1E"
+        android:padding="12dp"
+        android:gravity="center_vertical">
         <TextView
-            android:id="@+id/tv_tab_welcome"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:gravity="center"
-            android:padding="8dp"
-            android:text="WELCOME"
-            android:textColor="#00796B"
+            android:text="SP FLASH TOOL MOBILE"
+            android:textSize="16sp"
             android:textStyle="bold"
-            android:textSize="11sp" />
-
+            android:textColor="#00E676" />
         <TextView
-            android:id="@+id/tv_tab_format"
-            android:layout_width="0dp"
+            android:id="@+id/tv_device_status"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:padding="8dp"
-            android:text="FORMAT"
-            android:textColor="#555555"
+            android:text="DISCONNECTED"
+            android:textSize="11sp"
             android:textStyle="bold"
-            android:textSize="11sp" />
-
-        <TextView
-            android:id="@+id/tv_tab_download"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:padding="8dp"
-            android:text="DOWNLOAD"
-            android:textColor="#555555"
-            android:textStyle="bold"
-            android:textSize="11sp" />
-
-        <TextView
-            android:id="@+id/tv_tab_readback"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:padding="8dp"
-            android:text="READBACK"
-            android:textColor="#555555"
-            android:textStyle="bold"
-            android:textSize="11sp" />
+            android:textColor="#FF5252" />
     </LinearLayout>
 
-    <View
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="2dp"
-        android:background="#00796B" />
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp"
+        android:weightSum="4">
+        <Button
+            android:id="@+id/tab_welcome"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:text="WELCOME"
+            android:textSize="10sp"
+            android:backgroundTint="#00796B"
+            android:textColor="#FFFFFF" />
+        <Button
+            android:id="@+id/tab_format"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:text="FORMAT"
+            android:textSize="10sp"
+            android:backgroundTint="#37474F"
+            android:textColor="#FFFFFF" />
+        <Button
+            android:id="@+id/tab_download"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:text="DOWNLOAD"
+            android:textSize="10sp"
+            android:backgroundTint="#37474F"
+            android:textColor="#FFFFFF" />
+        <Button
+            android:id="@+id/tab_readback"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:text="READBACK"
+            android:textSize="10sp"
+            android:backgroundTint="#37474F"
+            android:textColor="#FFFFFF" />
+    </LinearLayout>
 
-    <!-- Container Utama -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:layout_marginTop="8dp"
+        android:background="#1E1E1E"
+        android:padding="12dp">
 
-        <!-- TAB 1: WELCOME (PANDUAN LENGKAP) -->
         <ScrollView
-            android:id="@+id/layout_welcome"
+            android:id="@+id/layout_tab_welcome"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="visible"
-            android:padding="12dp">
+            android:visibility="visible">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
-
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="SP Flash Tool Mobile v1.0"
-                    android:textSize="18sp"
+                    android:text="Panduan SP Flash Tool Mobile"
+                    android:textSize="14sp"
                     android:textStyle="bold"
-                    android:textColor="#00796B" />
-
+                    android:textColor="#00E676"
+                    android:layout_marginBottom="8dp" />
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Panduan & Penggunaan Alat Flashing MediaTek"
+                    android:text="1. Siapkan file Scatter &amp; DA Custom.\n2. Hubungkan HP target via OTG.\n3. Pilih tab DOWNLOAD atau FORMAT sesuai kebutuhan servis."
                     android:textSize="12sp"
-                    android:textColor="#666666"
-                    android:layout_marginBottom="12dp" />
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="#CCCCCC"
-                    android:layout_marginBottom="12dp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="1. Persiapan Sebelum Flashing:"
-                    android:textStyle="bold"
-                    android:textColor="#222222"
-                    android:textSize="13sp" />
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="• Aktifkan menu 'Koneksi OTG' di Pengaturan HP Pengirim.\n• Pastikan HP Target dalam kondisi MATI TOTAL (Power Off).\n• Siapkan file scatter (.txt) dan file image (.img) di memori HP pengirim."
-                    android:textSize="12sp"
-                    android:textColor="#444444"
-                    android:layout_marginBottom="12dp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="2. Cara Flash Partisi (Misal: boot.img):"
-                    android:textStyle="bold"
-                    android:textColor="#222222"
-                    android:textSize="13sp" />
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="• Masuk ke tab DOWNLOAD.\n• Tekan 'SCATTER' lalu pilih file MT67xx_Android_scatter.txt.\n• Cari baris partisi 'boot' di tabel, klik 'Choose File', lalu pilih file boot.img milikmu.\n• Tekan tombol hijau 'START'.\n• Colokkan kabel USB OTG ke HP Target sambil menahan tombol Vol (+) atau Vol (-)."
-                    android:textSize="12sp"
-                    android:textColor="#444444"
-                    android:layout_marginBottom="12dp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="3. Fungsi Tab Lainnya:"
-                    android:textStyle="bold"
-                    android:textColor="#222222"
-                    android:textSize="13sp" />
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="• FORMAT: Menghapus blok memori target.\n• READBACK: Backup/dump memori target ke file .img di HP pengirim."
-                    android:textSize="12sp"
-                    android:textColor="#444444" />
+                    android:textColor="#B0BEC5" />
             </LinearLayout>
         </ScrollView>
 
-        <!-- TAB 2: FORMAT -->
         <LinearLayout
-            android:id="@+id/layout_format"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:visibility="gone"
-            android:padding="16dp">
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Format Flash Memory"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-            <RadioGroup
-                android:id="@+id/rg_format_option"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp">
-                <RadioButton
-                    android:id="@+id/rb_auto_format"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Auto Format Flash (Default)"
-                    android:checked="true" />
-                <RadioButton
-                    android:id="@+id/rb_format_except_boot"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Format Whole Flash Except Bootloader" />
-            </RadioGroup>
-        </LinearLayout>
-
-        <!-- TAB 3: DOWNLOAD -->
-        <LinearLayout
-            android:id="@+id/layout_download"
+            android:id="@+id/layout_tab_format"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
             android:visibility="gone">
-
-            <LinearLayout
+            <Button
+                android:id="@+id/btn_format_userdata"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingTop="8dp">
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-                    <EditText
-                        android:id="@+id/et_da_path"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:hint="Download-Agent (DA File)"
-                        android:textSize="12sp"
-                        android:focusable="false" />
-                    <Button
-                        android:id="@+id/btn_choose_da"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="DA FILE"
-                        android:textSize="11sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-                    <EditText
-                        android:id="@+id/et_scatter_path"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:hint="Scatter-loading File"
-                        android:textSize="12sp"
-                        android:focusable="false" />
-                    <Button
-                        android:id="@+id/btn_choose_scatter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="SCATTER"
-                        android:textSize="11sp" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:background="#808080"
-                android:padding="4dp"
-                android:layout_marginTop="8dp">
-                <TextView
-                    android:layout_width="30dp"
-                    android:layout_height="wrap_content"
-                    android:text="[x]"
-                    android:textColor="#FFFFFF"
-                    android:textStyle="bold"
-                    android:textSize="10sp" />
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Name"
-                    android:textColor="#FFFFFF"
-                    android:textStyle="bold"
-                    android:textSize="10sp" />
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1.2"
-                    android:text="Begin Address"
-                    android:textColor="#FFFFFF"
-                    android:textStyle="bold"
-                    android:textSize="10sp" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="File Location"
-                    android:textColor="#FFFFFF"
-                    android:textStyle="bold"
-                    android:textSize="10sp" />
-            </LinearLayout>
-
-            <ScrollView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="#FFFFFF">
-                <LinearLayout
-                    android:id="@+id/container_partitions"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical" />
-            </ScrollView>
+                android:text="FORMAT USERDATA &amp; CACHE"
+                android:backgroundTint="#B71C1C"
+                android:textColor="#FFFFFF" />
         </LinearLayout>
 
-        <!-- TAB 4: READBACK -->
         <LinearLayout
-            android:id="@+id/layout_readback"
+            android:id="@+id/layout_tab_download"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:visibility="gone"
-            android:padding="16dp">
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Readback Memory (ROM Backup)"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+            android:visibility="gone">
             <Button
-                android:id="@+id/btn_select_readback_save"
+                android:id="@+id/btn_start_flash"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Pilih Lokasi Simpan File Backup (.img)"
-                android:layout_marginTop="12dp" />
-            <TextView
-                android:id="@+id/tv_readback_path"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Target Save File: Belum dipilih"
-                android:textSize="11sp"
-                android:textColor="#666666"
-                android:layout_marginTop="4dp" />
+                android:text="START FLASHING"
+                android:backgroundTint="#2E7D32"
+                android:textColor="#FFFFFF" />
         </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/layout_tab_readback"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="gone">
+            <Button
+                android:id="@+id/btn_start_readback"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="MULAI DUMP ROM"
+                android:backgroundTint="#F57F17"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
+
     </FrameLayout>
 
-    <!-- Tombol START & STOP -->
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingTop="8dp">
-        <Button
-            android:id="@+id/btn_download"
-            android:layout_width="0dp"
+        android:layout_height="100dp"
+        android:layout_marginTop="8dp"
+        android:background="#121212"
+        android:padding="4dp">
+        <TextView
+            android:id="@+id/tv_console_log"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="START"
-            android:backgroundTint="#2E7D32"
-            android:textColor="#FFFFFF"
-            android:textStyle="bold" />
-        <Button
-            android:id="@+id/btn_stop"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="STOP"
-            android:backgroundTint="#C62828"
-            android:textColor="#FFFFFF"
-            android:textStyle="bold" />
-    </LinearLayout>
+            android:text="Ready...\n"
+            android:textColor="#00FF00"
+            android:textSize="11sp" />
+    </ScrollView>
 
-    <ProgressBar
-        android:id="@+id/progress_bar"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:max="100"
-        android:progress="0"
-        android:layout_marginTop="4dp" />
-
-    <TextView
-        android:id="@+id/tv_status_log"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="4dp"
-        android:text="Status: Ready."
-        android:textColor="#333333"
-        android:textSize="11sp" />
 </LinearLayout>
