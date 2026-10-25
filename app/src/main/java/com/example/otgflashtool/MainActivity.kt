@@ -3,11 +3,12 @@ package com.example.otgflashtool
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.hardware.usb.*
 import android.net.Uri
 import android.os.Bundle
+import android.view.View
 import android.widget.*
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -33,6 +34,16 @@ class MainActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
     private lateinit var usbManager: UsbManager
 
+    private lateinit var layoutWelcome: View
+    private lateinit var layoutFormat: View
+    private lateinit var layoutDownload: View
+    private lateinit var layoutReadback: View
+
+    private lateinit var tvTabWelcome: TextView
+    private lateinit var tvTabFormat: TextView
+    private lateinit var tvTabDownload: TextView
+    private lateinit var tvTabReadback: TextView
+
     private val MTK_VENDOR_IDS = listOf(0x0E8D, 0x0BB4, 0x17EF)
     private val PICK_SCATTER_FILE = 1001
     private val PICK_DA_FILE = 1002
@@ -54,25 +65,20 @@ class MainActivity : AppCompatActivity() {
         progressBar = findViewById(R.id.progress_bar)
         usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
 
-        // Interaktif Tab Navigation
-        findViewById<TextView>(R.id.tv_tab_welcome)?.setOnClickListener {
-            showWelcomeGuideDialog()
-        }
-        findViewById<TextView>(R.id.tv_tab_format)?.setOnClickListener {
-            activeMode = "FORMAT"
-            tvStatusLog.text = "Mode: FORMAT / ERASE (Press DOWNLOAD to start Erase)"
-            Toast.makeText(this, "Format Mode Selected", Toast.LENGTH_SHORT).show()
-        }
-        findViewById<TextView>(R.id.tv_tab_download)?.setOnClickListener {
-            activeMode = "DOWNLOAD"
-            tvStatusLog.text = "Mode: DOWNLOAD (Write Firmware)"
-            Toast.makeText(this, "Download Mode Selected", Toast.LENGTH_SHORT).show()
-        }
-        findViewById<TextView>(R.id.tv_tab_readback)?.setOnClickListener {
-            activeMode = "READBACK"
-            tvStatusLog.text = "Mode: READBACK (Dump Partitions)"
-            Toast.makeText(this, "Readback Mode Selected", Toast.LENGTH_SHORT).show()
-        }
+        layoutWelcome = findViewById(R.id.layout_welcome)
+        layoutFormat = findViewById(R.id.layout_format)
+        layoutDownload = findViewById(R.id.layout_download)
+        layoutReadback = findViewById(R.id.layout_readback)
+
+        tvTabWelcome = findViewById(R.id.tv_tab_welcome)
+        tvTabFormat = findViewById(R.id.tv_tab_format)
+        tvTabDownload = findViewById(R.id.tv_tab_download)
+        tvTabReadback = findViewById(R.id.tv_tab_readback)
+
+        tvTabWelcome.setOnClickListener { switchTab("WELCOME") }
+        tvTabFormat.setOnClickListener { switchTab("FORMAT") }
+        tvTabDownload.setOnClickListener { switchTab("DOWNLOAD") }
+        tvTabReadback.setOnClickListener { switchTab("READBACK") }
 
         findViewById<Button>(R.id.btn_choose_scatter).setOnClickListener {
             val intent = Intent(Intent.ACTION_GET_CONTENT).apply { type = "*/*" }
@@ -97,17 +103,40 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showWelcomeGuideDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("SP Flash Tool Mobile v1.0")
-            .setMessage("Panduan Penggunaan:\n\n" +
-                    "1. Klik 'DA FILE' untuk memilih Download Agent kustom (Opsional).\n" +
-                    "2. Klik 'SCATTER' untuk memuat file scatter firmware (.txt).\n" +
-                    "3. Pilih file image (.img) pada baris partisi yang ingin di-flash.\n" +
-                    "4. Matikan HP Target, tekan 'DOWNLOAD', lalu hubungkan kabel USB OTG sambil menahan tombol Vol (+) / (-).\n\n" +
-                    "Status USB Host: " + if (usbManager.deviceList.isNotEmpty()) "OTG Connected" else "No OTG Device")
-            .setPositiveButton("OK", null)
-            .show()
+    private fun switchTab(tabName: String) {
+        activeMode = tabName
+        layoutWelcome.visibility = View.GONE
+        layoutFormat.visibility = View.GONE
+        layoutDownload.visibility = View.GONE
+        layoutReadback.visibility = View.GONE
+
+        tvTabWelcome.setTextColor(Color.parseColor("#555555"))
+        tvTabFormat.setTextColor(Color.parseColor("#555555"))
+        tvTabDownload.setTextColor(Color.parseColor("#555555"))
+        tvTabReadback.setTextColor(Color.parseColor("#555555"))
+
+        when (tabName) {
+            "WELCOME" -> {
+                layoutWelcome.visibility = View.VISIBLE
+                tvTabWelcome.setTextColor(Color.parseColor("#00796B"))
+                tvStatusLog.text = "Mode: WELCOME (User Guide)"
+            }
+            "FORMAT" -> {
+                layoutFormat.visibility = View.VISIBLE
+                tvTabFormat.setTextColor(Color.parseColor("#00796B"))
+                tvStatusLog.text = "Mode: FORMAT (Memory Erase)"
+            }
+            "DOWNLOAD" -> {
+                layoutDownload.visibility = View.VISIBLE
+                tvTabDownload.setTextColor(Color.parseColor("#00796B"))
+                tvStatusLog.text = "Mode: DOWNLOAD (Write Firmware)"
+            }
+            "READBACK" -> {
+                layoutReadback.visibility = View.VISIBLE
+                tvTabReadback.setTextColor(Color.parseColor("#00796B"))
+                tvStatusLog.text = "Mode: READBACK (Dump ROM)"
+            }
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
