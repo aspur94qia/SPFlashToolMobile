@@ -10,7 +10,6 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.io.OutputStream
 import java.util.zip.CRC32
 import kotlin.concurrent.thread
 
@@ -36,12 +35,11 @@ class MainActivity : AppCompatActivity() {
     private val PICK_SCATTER_FILE = 1001
     private val PICK_DA_FILE = 1002
     private val PICK_IMG_FILE_BASE = 2000
-    private val CREATE_READBACK_FILE = 3000
 
     private val partitionList = mutableListOf<PartitionInfo>()
     private var selectedDaUri: Uri? = null
     @Volatile private var isOperationRunning = false
-    private var activeMode = "DOWNLOAD" // DOWNLOAD, FORMAT, READBACK
+    private var activeMode = "DOWNLOAD"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -213,17 +211,14 @@ class MainActivity : AppCompatActivity() {
             }
 
             if (endpointIn != null && endpointOut != null) {
-                // Step 1: BROM Handshake Sequence
                 val handshakeCmd = byteArrayOf(0xA0.toByte(), 0x0A.toByte(), 0x50.toByte(), 0x05.toByte())
                 connection.bulkTransfer(endpointOut, handshakeCmd, handshakeCmd.size, 1000)
 
-                // Step 2: Download Agent (DA) Ingestion if provided
                 if (selectedDaUri != null) {
                     runOnUiThread { tvStatusLog.text = "Status: Loading Download Agent (DA) binary..." }
                     sendDaPayload(connection, endpointOut, selectedDaUri!!)
                 }
 
-                // Step 3: Execute Selected Action
                 when (activeMode) {
                     "DOWNLOAD" -> performVerifiedFlashing(connection, endpointOut)
                     "FORMAT" -> performFormatErase(connection, endpointOut)
@@ -267,9 +262,9 @@ class MainActivity : AppCompatActivity() {
                     var totalWritten = 0L
 
                     while (inputStream.read(buffer).also { bytesRead = it } != -1 && isOperationRunning) {
-                        // Calculate CRC32 checksum per chunk for data integrity
                         val crc = CRC32()
                         crc.update(buffer, 0, bytesRead)
+                        val crcHex = java.lang.Long.toHexString(crc.value)
 
                         var sent = 0
                         var retries = 0
@@ -282,7 +277,7 @@ class MainActivity : AppCompatActivity() {
                             totalWritten += sent
                             val progress = ((index + 1).toFloat() / partitionList.size * 100).toInt()
                             runOnUiThread {
-                                tvStatusLog.text = "Flashing ${part.name}: ${totalWritten / 1024} KB [CRC: ${Long.toHexString(crc.value)}]"
+                                tvStatusLog.text = "Flashing ${part.name}: ${totalWritten / 1024} KB [CRC: $crcHex]"
                                 progressBar.progress = progress
                             }
                         } else {
