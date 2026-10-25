@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="8dp"
-    android:backgroundColor="#E0E0E0">
+    android:background="#E0E0E0">
 
     <HorizontalScrollView
         android:layout_width="match_parent"
