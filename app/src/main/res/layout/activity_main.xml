@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="8dp"
+    android:backgroundColor="#E0E0E0">
+
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#D0D0D0">
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Welcome" style="?android:attr/buttonBarButtonStyle" />
+            <Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Format" style="?android:attr/buttonBarButtonStyle" />
+            <Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Download" android:textStyle="bold" style="?android:attr/buttonBarButtonStyle" />
+            <Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Readback" style="?android:attr/buttonBarButtonStyle" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp">
+        <EditText
+            android:id="@+id/et_scatter_path"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Scatter-loading File"
+            android:textSize="12sp"
+            android:focusable="false" />
+        <Button
+            android:id="@+id/btn_choose_scatter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Choose" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#A0A0A0"
+        android:padding="4dp"
+        android:layout_marginTop="8dp">
+        <TextView android:layout_width="30dp" android:layout_height="wrap_content" android:text="[x]" android:textStyle="bold" />
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Name" android:textStyle="bold" />
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Begin Address" android:textStyle="bold" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#FFFFFF">
+        <LinearLayout
+            android:id="@+id/container_partitions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp">
+        <Button
+            android:id="@+id/btn_download"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="DOWNLOAD"
+            android:backgroundTint="#2E7D32"
+            android:textColor="#FFFFFF" />
+        <Button
+            android:id="@+id/btn_stop"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="STOP"
+            android:backgroundTint="#C62828"
+            android:textColor="#FFFFFF" />
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:max="100"
+        android:progress="0" />
+
+    <TextView
+        android:id="@+id/tv_status_log"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Status: BROM Disconnected"
+        android:textSize="11sp"
+        android:textColor="#333333"
+        android:padding="4dp" />
+
+</LinearLayout>
