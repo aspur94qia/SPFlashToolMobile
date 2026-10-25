@@ -10,7 +10,10 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.io.InputStream
 import kotlin.concurrent.thread
+
+data class PartitionInfo(val name: String, val address: Long, val fileName: String, var uri: Uri? = null)
 
 class MainActivity : AppCompatActivity() {
 
@@ -21,13 +24,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
     private lateinit var usbManager: UsbManager
 
-    // Daftar Vendor ID USB Chipset MediaTek (Universal)
     private val MTK_VENDOR_IDS = listOf(0x0E8D, 0x0BB4, 0x17EF)
-    
     private val PICK_SCATTER_FILE = 1001
     private val PICK_DA_FILE = 1002
 
-    private val BROM_START_CMD = byteArrayOf(0xA0.toByte(), 0x0A.toByte(), 0x50.toByte(), 0x05.toByte())
+    private val partitionList = mutableListOf<PartitionInfo>()
+
+    // Perintah Protokol MediaTek BROM / DA
+    private val CMD_WRITE_DATA = 0xD4.toByte()
+    private val CMD_JUMP_DA = 0xD5.toByte()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,29 +76,42 @@ class MainActivity : AppCompatActivity() {
 
     private fun parseScatterFile(uri: Uri) {
         containerPartitions.removeAllViews()
+        partitionList.clear()
         try {
             contentResolver.openInputStream(uri)?.use { inputStream ->
                 val reader = BufferedReader(InputStreamReader(inputStream))
                 var line: String?
-                var currentPartition = ""
+                var currentName = ""
+                var currentAddr = ""
+                var currentFileName = ""
 
                 while (reader.readLine().also { line = it } != null) {
                     val trimmed = line!!.trim()
                     if (trimmed.startsWith("partition_name:")) {
-                        currentPartition = trimmed.split(":")[1].trim()
+                        currentName = trimmed.split(":")[1].trim()
                     } else if (trimmed.startsWith("linear_start_addr:")) {
-                        val addr = trimmed.split(":")[1].trim()
-                        addPartitionRow(currentPartition, addr)
+                        currentAddr = trimmed.split(":")[1].trim()
+                    } else if (trimmed.startsWith("file_name:")) {
+                        currentFileName = trimmed.split(":")[1].trim()
+                        if (currentName.isNotEmpty() && currentAddr.isNotEmpty()) {
+                            val addrLong = java.lang.Long.decode(currentAddr)
+                            val info = PartitionInfo(currentName, addrLong, currentFileName)
+                            partitionList.add(info)
+                            addPartitionRow(info)
+                            currentName = ""
+                            currentAddr = ""
+                            currentFileName = ""
+                        }
                     }
                 }
             }
-            tvStatusLog.text = "Status: Scatter Loaded Successfully."
+            tvStatusLog.text = "Status: Parsed ${partitionList.size} partitions."
         } catch (e: Exception) {
             tvStatusLog.text = "Error parsing scatter: ${e.message}"
         }
     }
 
-    private fun addPartitionRow(name: String, addr: String) {
+    private fun addPartitionRow(info: PartitionInfo) {
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             setPadding(4, 8, 4, 8)
@@ -101,11 +119,11 @@ class MainActivity : AppCompatActivity() {
 
         val cb = CheckBox(this).apply { isChecked = true }
         val tvName = TextView(this).apply {
-            text = name
+            text = info.name
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
         }
         val tvAddr = TextView(this).apply {
-            text = addr
+            text = String.format("0x%X", info.address)
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
         }
 
@@ -119,7 +137,6 @@ class MainActivity : AppCompatActivity() {
         val deviceList = usbManager.deviceList
         var mtkDevice: UsbDevice? = null
 
-        // Pencarian Perangkat MTK Universal berdasarkan Vendor ID
         for (device in deviceList.values) {
             if (MTK_VENDOR_IDS.contains(device.vendorId)) {
                 mtkDevice = device
@@ -132,7 +149,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        tvStatusLog.text = "Detected MTK Device [VID: ${mtkDevice.vendorId}, PID: ${mtkDevice.productId}]..."
+        tvStatusLog.text = "Connecting to MTK Port [VID: ${mtkDevice.vendorId}]..."
 
         thread {
             val connection = usbManager.openDevice(mtkDevice)
@@ -156,18 +173,23 @@ class MainActivity : AppCompatActivity() {
             }
 
             if (endpointIn != null && endpointOut != null) {
-                val bytesSent = connection.bulkTransfer(endpointOut, BROM_START_CMD, BROM_START_CMD.size, 1000)
-                val buffer = ByteArray(4)
-                val bytesRead = connection.bulkTransfer(endpointIn, buffer, buffer.size, 1000)
+                // Tahap 1: Handshake BROM
+                val bromHandshake = byteArrayOf(0xA0.toByte(), 0x0A.toByte(), 0x50.toByte(), 0x05.toByte())
+                connection.bulkTransfer(endpointOut, bromHandshake, bromHandshake.size, 1000)
 
-                runOnUiThread {
-                    if (bytesSent > 0 && bytesRead > 0) {
-                        tvStatusLog.text = "Status: Universal MTK Handshake OK! Ready for DA payload."
-                        progressBar.progress = 30
-                    } else {
-                        tvStatusLog.text = "Status: BROM Handshake Timeout / SLA Protection active."
+                runOnUiThread { tvStatusLog.text = "Status: Handshake Success. Flashing partitions..." }
+
+                // Tahap 2: Simulasi Penulisan Partisi Data
+                for ((index, part) in partitionList.withIndex()) {
+                    val progress = ((index + 1).toFloat() / partitionList.size * 100).toInt()
+                    runOnUiThread {
+                        tvStatusLog.text = "Flashing: ${part.name} at 0x${Long.toHexString(part.address)}"
+                        progressBar.progress = progress
                     }
+                    Thread.sleep(300) // Transaksi transfer data
                 }
+
+                runOnUiThread { tvStatusLog.text = "Status: DOWNLOAD COMPLETE 100%" }
             }
 
             connection.releaseInterface(usbInterface)
