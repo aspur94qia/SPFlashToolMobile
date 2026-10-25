@@ -12,6 +12,7 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.io.OutputStream
 import java.util.zip.CRC32
 import kotlin.concurrent.thread
 
@@ -31,6 +32,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var etDaPath: EditText
     private lateinit var containerPartitions: LinearLayout
     private lateinit var tvStatusLog: TextView
+    private lateinit var tvReadbackPath: TextView
     private lateinit var progressBar: ProgressBar
     private lateinit var usbManager: UsbManager
 
@@ -48,9 +50,11 @@ class MainActivity : AppCompatActivity() {
     private val PICK_SCATTER_FILE = 1001
     private val PICK_DA_FILE = 1002
     private val PICK_IMG_FILE_BASE = 2000
+    private val CREATE_READBACK_FILE = 3000
 
     private val partitionList = mutableListOf<PartitionInfo>()
     private var selectedDaUri: Uri? = null
+    private var readbackSaveUri: Uri? = null
     @Volatile private var isOperationRunning = false
     private var activeMode = "DOWNLOAD"
 
@@ -62,6 +66,7 @@ class MainActivity : AppCompatActivity() {
         etDaPath = findViewById(R.id.et_da_path)
         containerPartitions = findViewById(R.id.container_partitions)
         tvStatusLog = findViewById(R.id.tv_status_log)
+        tvReadbackPath = findViewById(R.id.tv_readback_path)
         progressBar = findViewById(R.id.progress_bar)
         usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
 
@@ -88,6 +93,15 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btn_choose_da).setOnClickListener {
             val intent = Intent(Intent.ACTION_GET_CONTENT).apply { type = "*/*" }
             startActivityForResult(intent, PICK_DA_FILE)
+        }
+
+        findViewById<Button>(R.id.btn_select_readback_save).setOnClickListener {
+            val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "application/octet-stream"
+                putExtra(Intent.EXTRA_TITLE, "readback_dump.img")
+            }
+            startActivityForResult(intent, CREATE_READBACK_FILE)
         }
 
         findViewById<Button>(R.id.btn_download).setOnClickListener {
@@ -124,7 +138,7 @@ class MainActivity : AppCompatActivity() {
             "FORMAT" -> {
                 layoutFormat.visibility = View.VISIBLE
                 tvTabFormat.setTextColor(Color.parseColor("#00796B"))
-                tvStatusLog.text = "Mode: FORMAT (Memory Erase)"
+                tvStatusLog.text = "Mode: FORMAT (Press START to Format)"
             }
             "DOWNLOAD" -> {
                 layoutDownload.visibility = View.VISIBLE
@@ -134,7 +148,7 @@ class MainActivity : AppCompatActivity() {
             "READBACK" -> {
                 layoutReadback.visibility = View.VISIBLE
                 tvTabReadback.setTextColor(Color.parseColor("#00796B"))
-                tvStatusLog.text = "Mode: READBACK (Dump ROM)"
+                tvStatusLog.text = "Mode: READBACK (Press START to Dump)"
             }
         }
     }
@@ -150,6 +164,10 @@ class MainActivity : AppCompatActivity() {
                 selectedDaUri = uri
                 etDaPath.setText(uri.path)
                 tvStatusLog.text = "Status: DA File Loaded."
+            } else if (requestCode == CREATE_READBACK_FILE) {
+                readbackSaveUri = uri
+                tvReadbackPath.text = "Save Target: ${uri.path}"
+                tvStatusLog.text = "Status: Readback Save File Created."
             } else if (requestCode >= PICK_IMG_FILE_BASE) {
                 val index = requestCode - PICK_IMG_FILE_BASE
                 if (index < partitionList.size) {
@@ -380,16 +398,55 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun performFormatErase(connection: UsbDeviceConnection, epOut: UsbEndpoint) {
-        runOnUiThread { tvStatusLog.text = "Status: Executing Format / Erase..." }
+        runOnUiThread { tvStatusLog.text = "Status: Erasing Flash Memory Blocks..." }
         val formatCmd = byteArrayOf(0x0C.toByte(), 0x00.toByte(), 0x00.toByte(), 0x00.toByte())
         connection.bulkTransfer(epOut, formatCmd, formatCmd.size, 1000)
-        runOnUiThread { tvStatusLog.text = "Status: Format Complete." }
+        
+        // Loop erase per partition address
+        for (part in partitionList) {
+            if (!isOperationRunning) break
+            if (!part.isEnabled) continue
+            val addrCmd = byteArrayOf(
+                (part.address and 0xFF).toByte(),
+                ((part.address shr 8) and 0xFF).toByte(),
+                ((part.address shr 16) and 0xFF).toByte(),
+                ((part.address shr 24) and 0xFF).toByte()
+            )
+            connection.bulkTransfer(epOut, addrCmd, addrCmd.size, 1000)
+            runOnUiThread { tvStatusLog.text = "Erasing partition: ${part.name}" }
+        }
+
+        runOnUiThread { tvStatusLog.text = "Status: FORMAT / ERASE COMPLETED." }
     }
 
     private fun performReadbackDump(connection: UsbDeviceConnection, epIn: UsbEndpoint) {
-        runOnUiThread { tvStatusLog.text = "Status: Executing Readback Dump..." }
-        val readCmd = byteArrayOf(0x0D.toByte(), 0x00.toByte(), 0x00.toByte(), 0x00.toByte())
-        connection.bulkTransfer(epIn, readCmd, readCmd.size, 1000)
-        runOnUiThread { tvStatusLog.text = "Status: Readback Complete." }
+        if (readbackSaveUri == null) {
+            runOnUiThread { tvStatusLog.text = "Error: Pilih file tempat simpan Readback dulu!" }
+            return
+        }
+
+        runOnUiThread { tvStatusLog.text = "Status: Reading Data Dump from Device..." }
+        val buffer = ByteArray(65536)
+
+        try {
+            contentResolver.openOutputStream(readbackSaveUri!!)?.use { outputStream ->
+                var totalBytesRead = 0L
+                var bytesRead = 1
+
+                while (bytesRead > 0 && isOperationRunning && totalBytesRead < 104857600L) { // Limit 100MB demo block
+                    bytesRead = connection.bulkTransfer(epIn, buffer, buffer.size, 2000)
+                    if (bytesRead > 0) {
+                        outputStream.write(buffer, 0, bytesRead)
+                        totalBytesRead += bytesRead
+                        runOnUiThread {
+                            tvStatusLog.text = "Readback Dump: ${totalBytesRead / 1024} KB Saved."
+                        }
+                    }
+                }
+            }
+            runOnUiThread { tvStatusLog.text = "Status: READBACK BACKUP COMPLETED!" }
+        } catch (e: Exception) {
+            runOnUiThread { tvStatusLog.text = "Readback Error: ${e.message}" }
+        }
     }
 }

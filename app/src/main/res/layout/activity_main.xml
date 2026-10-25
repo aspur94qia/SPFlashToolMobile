@@ -68,13 +68,13 @@
         android:layout_height="2dp"
         android:background="#00796B" />
 
-    <!-- Container Utama Tempat Berpindah Layar -->
+    <!-- Container Utama -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <!-- LAYOUT 1: WELCOME TAB -->
+        <!-- TAB 1: WELCOME -->
         <ScrollView
             android:id="@+id/layout_welcome"
             android:layout_width="match_parent"
@@ -88,7 +88,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Selamat Datang di SP Flash Tool Mobile"
+                    android:text="SP Flash Tool Mobile v1.0 Professional"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:textColor="#00796B" />
@@ -96,13 +96,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:text="Aplikasi ini digunakan untuk flashing perangkat MediaTek (MTK) via kabel USB OTG.\n\nPetunjuk Singkat:\n1. Buka Tab DOWNLOAD untuk flashing firmware.\n2. Buka Tab FORMAT untuk menghapus memori HP target.\n3. Buka Tab READBACK untuk melakukan dump/backup partisi."
+                    android:text="Fitur Lengkap:\n- DOWNLOAD: Menulis firmware (.img) ke target.\n- FORMAT: Menghapus blok memori target.\n- READBACK: Backup/dump memori target ke file .img."
                     android:textSize="13sp"
                     android:textColor="#333333" />
             </LinearLayout>
         </ScrollView>
 
-        <!-- LAYOUT 2: FORMAT TAB -->
+        <!-- TAB 2: FORMAT -->
         <LinearLayout
             android:id="@+id/layout_format"
             android:layout_width="match_parent"
@@ -113,26 +113,29 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Format / Erase Memory"
+                android:text="Format Flash Memory"
                 android:textSize="14sp"
                 android:textStyle="bold" />
             <RadioGroup
+                android:id="@+id/rg_format_option"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp">
                 <RadioButton
+                    android:id="@+id/rb_auto_format"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Auto Format Flash"
+                    android:text="Auto Format Flash (Default)"
                     android:checked="true" />
                 <RadioButton
+                    android:id="@+id/rb_format_except_boot"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Format Whole Flash except Bootloader" />
+                    android:text="Format Whole Flash Except Bootloader" />
             </RadioGroup>
         </LinearLayout>
 
-        <!-- LAYOUT 3: DOWNLOAD TAB (Default) -->
+        <!-- TAB 3: DOWNLOAD -->
         <LinearLayout
             android:id="@+id/layout_download"
             android:layout_width="match_parent"
@@ -237,7 +240,7 @@
             </ScrollView>
         </LinearLayout>
 
-        <!-- LAYOUT 4: READBACK TAB -->
+        <!-- TAB 4: READBACK -->
         <LinearLayout
             android:id="@+id/layout_readback"
             android:layout_width="match_parent"
@@ -248,19 +251,27 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Readback (Backup ROM)"
+                android:text="Readback Memory (ROM Backup)"
                 android:textSize="14sp"
                 android:textStyle="bold" />
             <Button
-                android:id="@+id/btn_add_readback"
-                android:layout_width="wrap_content"
+                android:id="@+id/btn_select_readback_save"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="+ Add Readback Partition"
-                android:layout_marginTop="8dp" />
+                android:text="Pilih Lokasi Simpan File Backup (.img)"
+                android:layout_marginTop="12dp" />
+            <TextView
+                android:id="@+id/tv_readback_path"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Target Save File: Belum dipilih"
+                android:textSize="11sp"
+                android:textColor="#666666"
+                android:layout_marginTop="4dp" />
         </LinearLayout>
     </FrameLayout>
 
-    <!-- Action Buttons -->
+    <!-- Tombol Eksekusi Utam (START & STOP) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -271,7 +282,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="DOWNLOAD"
+            android:text="START"
             android:backgroundTint="#2E7D32"
             android:textColor="#FFFFFF"
             android:textStyle="bold" />
