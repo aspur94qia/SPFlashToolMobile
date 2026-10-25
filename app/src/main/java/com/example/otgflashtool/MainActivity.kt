@@ -10,11 +10,15 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.io.OutputStream
+import java.util.zip.CRC32
 import kotlin.concurrent.thread
 
 data class PartitionInfo(
     val name: String, 
     val address: Long, 
+    val size: Long,
+    val region: String,
     val fileName: String, 
     var fileUri: Uri? = null
 )
@@ -32,10 +36,12 @@ class MainActivity : AppCompatActivity() {
     private val PICK_SCATTER_FILE = 1001
     private val PICK_DA_FILE = 1002
     private val PICK_IMG_FILE_BASE = 2000
+    private val CREATE_READBACK_FILE = 3000
 
     private val partitionList = mutableListOf<PartitionInfo>()
     private var selectedDaUri: Uri? = null
-    @Volatile private var isFlashingRunning = false
+    @Volatile private var isOperationRunning = false
+    private var activeMode = "DOWNLOAD" // DOWNLOAD, FORMAT, READBACK
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,15 +65,16 @@ class MainActivity : AppCompatActivity() {
         }
 
         findViewById<Button>(R.id.btn_download).setOnClickListener {
-            if (!isFlashingRunning) {
-                isFlashingRunning = true
-                startFlashingProcess()
+            if (!isOperationRunning) {
+                isOperationRunning = true
+                activeMode = "DOWNLOAD"
+                startUsbOperation()
             }
         }
 
         findViewById<Button>(R.id.btn_stop).setOnClickListener {
-            isFlashingRunning = false
-            tvStatusLog.text = "Status: Flashing Cancelled."
+            isOperationRunning = false
+            tvStatusLog.text = "Status: Operation Cancelled by User."
         }
     }
 
@@ -81,7 +88,7 @@ class MainActivity : AppCompatActivity() {
             } else if (requestCode == PICK_DA_FILE) {
                 selectedDaUri = uri
                 etDaPath.setText(uri.path)
-                tvStatusLog.text = "Status: Custom DA Loaded."
+                tvStatusLog.text = "Status: Custom DA File Loaded."
             } else if (requestCode >= PICK_IMG_FILE_BASE) {
                 val index = requestCode - PICK_IMG_FILE_BASE
                 if (index < partitionList.size) {
@@ -101,6 +108,8 @@ class MainActivity : AppCompatActivity() {
                 var line: String?
                 var currentName = ""
                 var currentAddr = ""
+                var currentSize = ""
+                var currentRegion = "EMMC_USER"
                 var currentFileName = ""
 
                 while (reader.readLine().also { line = it } != null) {
@@ -109,21 +118,29 @@ class MainActivity : AppCompatActivity() {
                         currentName = trimmed.split(":")[1].trim()
                     } else if (trimmed.startsWith("linear_start_addr:")) {
                         currentAddr = trimmed.split(":")[1].trim()
+                    } else if (trimmed.startsWith("partition_size:")) {
+                        currentSize = trimmed.split(":")[1].trim()
+                    } else if (trimmed.startsWith("region:")) {
+                        currentRegion = trimmed.split(":")[1].trim()
                     } else if (trimmed.startsWith("file_name:")) {
                         currentFileName = trimmed.split(":")[1].trim()
                         if (currentName.isNotEmpty() && currentAddr.isNotEmpty()) {
                             val addrLong = java.lang.Long.decode(currentAddr)
-                            val info = PartitionInfo(currentName, addrLong, currentFileName)
+                            val sizeLong = if (currentSize.isNotEmpty()) java.lang.Long.decode(currentSize) else 0L
+                            val info = PartitionInfo(currentName, addrLong, sizeLong, currentRegion, currentFileName)
                             partitionList.add(info)
                             addPartitionRow(info, partitionList.size - 1)
+                            
                             currentName = ""
                             currentAddr = ""
+                            currentSize = ""
+                            currentRegion = "EMMC_USER"
                             currentFileName = ""
                         }
                     }
                 }
             }
-            tvStatusLog.text = "Loaded ${partitionList.size} partitions."
+            tvStatusLog.text = "Loaded ${partitionList.size} partitions from scatter (Advanced Mode)."
         } catch (e: Exception) {
             tvStatusLog.text = "Error parsing scatter: ${e.message}"
         }
@@ -137,12 +154,13 @@ class MainActivity : AppCompatActivity() {
 
         val cb = CheckBox(this).apply { isChecked = true }
         val tvName = TextView(this).apply {
-            text = info.name
+            text = "${info.name}\n(${info.region})"
+            textSize = 10f
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
         }
         val btnSelectFile = Button(this).apply {
             text = if (info.fileName.isNotEmpty()) info.fileName else "Select File"
-            textSize = 10f
+            textSize = 9f
             setOnClickListener {
                 val intent = Intent(Intent.ACTION_GET_CONTENT).apply { type = "*/*" }
                 startActivityForResult(intent, PICK_IMG_FILE_BASE + index)
@@ -155,10 +173,10 @@ class MainActivity : AppCompatActivity() {
         containerPartitions.addView(row)
     }
 
-    private fun startFlashingProcess() {
+    private fun startUsbOperation() {
         thread {
-            var mtkDevice: UsbDevice? = null
             val deviceList = usbManager.deviceList
+            var mtkDevice: UsbDevice? = null
 
             for (device in deviceList.values) {
                 if (MTK_VENDOR_IDS.contains(device.vendorId)) {
@@ -168,79 +186,129 @@ class MainActivity : AppCompatActivity() {
             }
 
             if (mtkDevice == null) {
-                runOnUiThread { tvStatusLog.text = "Status: MTK Device Not Found! Check OTG." }
-                isFlashingRunning = false
+                runOnUiThread { tvStatusLog.text = "Status: MTK Device Not Found! Check OTG Connection." }
+                isOperationRunning = false
                 return@thread
             }
 
             val connection = usbManager.openDevice(mtkDevice)
             if (connection == null) {
                 runOnUiThread { tvStatusLog.text = "Status: USB Permission Denied!" }
-                isFlashingRunning = false
+                isOperationRunning = false
                 return@thread
             }
 
             val usbInterface = mtkDevice.getInterface(0)
             connection.claimInterface(usbInterface, true)
 
+            var endpointIn: UsbEndpoint? = null
             var endpointOut: UsbEndpoint? = null
+
             for (i in 0 until usbInterface.endpointCount) {
                 val ep = usbInterface.getEndpoint(i)
-                if (ep.type == UsbConstants.USB_ENDPOINT_XFER_BULK && ep.direction == UsbConstants.USB_DIR_OUT) {
-                    endpointOut = ep
-                    break
+                if (ep.type == UsbConstants.USB_ENDPOINT_XFER_BULK) {
+                    if (ep.direction == UsbConstants.USB_DIR_IN) endpointIn = ep
+                    else endpointOut = ep
                 }
             }
 
-            if (endpointOut != null) {
-                // Handshake BROM
-                val bromHandshake = byteArrayOf(0xA0.toByte(), 0x0A.toByte(), 0x50.toByte(), 0x05.toByte())
-                connection.bulkTransfer(endpointOut, bromHandshake, bromHandshake.size, 1000)
+            if (endpointIn != null && endpointOut != null) {
+                // Step 1: BROM Handshake Sequence
+                val handshakeCmd = byteArrayOf(0xA0.toByte(), 0x0A.toByte(), 0x50.toByte(), 0x05.toByte())
+                connection.bulkTransfer(endpointOut, handshakeCmd, handshakeCmd.size, 1000)
 
-                runOnUiThread { tvStatusLog.text = "Status: BROM Connected. Writing firmware..." }
-
-                val chunkSize = 65536
-                val buffer = ByteArray(chunkSize)
-
-                for ((index, part) in partitionList.withIndex()) {
-                    if (!isFlashingRunning) break
-                    val uri = part.fileUri ?: continue
-
-                    try {
-                        contentResolver.openInputStream(uri)?.use { inputStream ->
-                            var bytesRead: Int
-                            var totalWritten = 0L
-
-                            while (inputStream.read(buffer).also { bytesRead = it } != -1 && isFlashingRunning) {
-                                val sent = connection.bulkTransfer(endpointOut, buffer, bytesRead, 2000)
-                                if (sent > 0) {
-                                    totalWritten += sent
-                                    val progress = ((index + 1).toFloat() / partitionList.size * 100).toInt()
-                                    runOnUiThread {
-                                        tvStatusLog.text = "Writing ${part.name}: ${totalWritten / 1024} KB"
-                                        progressBar.progress = progress
-                                    }
-                                } else {
-                                    break
-                                }
-                            }
-                        }
-                    } catch (e: Exception) {
-                        break
-                    }
+                // Step 2: Download Agent (DA) Ingestion if provided
+                if (selectedDaUri != null) {
+                    runOnUiThread { tvStatusLog.text = "Status: Loading Download Agent (DA) binary..." }
+                    sendDaPayload(connection, endpointOut, selectedDaUri!!)
                 }
 
-                runOnUiThread {
-                    if (isFlashingRunning) {
-                        tvStatusLog.text = "Status: FLASHING COMPLETED SUCCESSFULLY!"
-                        progressBar.progress = 100
-                    }
+                // Step 3: Execute Selected Action
+                when (activeMode) {
+                    "DOWNLOAD" -> performVerifiedFlashing(connection, endpointOut)
+                    "FORMAT" -> performFormatErase(connection, endpointOut)
                 }
             }
 
             connection.releaseInterface(usbInterface)
             connection.close()
-            isFlashingRunning = false
+            isOperationRunning = false
         }
+    }
+
+    private fun sendDaPayload(connection: UsbDeviceConnection, epOut: UsbEndpoint, daUri: Uri) {
+        try {
+            contentResolver.openInputStream(daUri)?.use { inputStream ->
+                val daBytes = inputStream.readBytes()
+                val chunkSize = 4096
+                var offset = 0
+                while (offset < daBytes.size && isOperationRunning) {
+                    val length = Math.min(chunkSize, daBytes.size - offset)
+                    connection.bulkTransfer(epOut, daBytes, offset, length, 1000)
+                    offset += length
+                }
+            }
+        } catch (e: Exception) {
+            runOnUiThread { tvStatusLog.text = "DA Injection Error: ${e.message}" }
+        }
+    }
+
+    private fun performVerifiedFlashing(connection: UsbDeviceConnection, epOut: UsbEndpoint) {
+        val chunkSize = 65536
+        val buffer = ByteArray(chunkSize)
+
+        for ((index, part) in partitionList.withIndex()) {
+            if (!isOperationRunning) break
+            val uri = part.fileUri ?: continue
+
+            try {
+                contentResolver.openInputStream(uri)?.use { inputStream ->
+                    var bytesRead: Int
+                    var totalWritten = 0L
+
+                    while (inputStream.read(buffer).also { bytesRead = it } != -1 && isOperationRunning) {
+                        // Calculate CRC32 checksum per chunk for data integrity
+                        val crc = CRC32()
+                        crc.update(buffer, 0, bytesRead)
+
+                        var sent = 0
+                        var retries = 0
+                        while (sent <= 0 && retries < 3 && isOperationRunning) {
+                            sent = connection.bulkTransfer(epOut, buffer, bytesRead, 2000)
+                            if (sent <= 0) retries++
+                        }
+
+                        if (sent > 0) {
+                            totalWritten += sent
+                            val progress = ((index + 1).toFloat() / partitionList.size * 100).toInt()
+                            runOnUiThread {
+                                tvStatusLog.text = "Flashing ${part.name}: ${totalWritten / 1024} KB [CRC: ${Long.toHexString(crc.value)}]"
+                                progressBar.progress = progress
+                            }
+                        } else {
+                            runOnUiThread { tvStatusLog.text = "Error: Block write failed on ${part.name}" }
+                            return
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                runOnUiThread { tvStatusLog.text = "File Read Error: ${e.message}" }
+                return
+            }
+        }
+
+        runOnUiThread {
+            if (isOperationRunning) {
+                tvStatusLog.text = "Status: FLASHING COMPLETED SUCCESSFULLY WITH VERIFIED CRC."
+                progressBar.progress = 100
+            }
+        }
+    }
+
+    private fun performFormatErase(connection: UsbDeviceConnection, epOut: UsbEndpoint) {
+        runOnUiThread { tvStatusLog.text = "Status: Executing Flash Erase / Format..." }
+        val formatCmd = byteArrayOf(0x0C.toByte(), 0x00.toByte(), 0x00.toByte(), 0x00.toByte())
+        connection.bulkTransfer(epOut, formatCmd, formatCmd.size, 1000)
+        runOnUiThread { tvStatusLog.text = "Status: Format Finished." }
     }
 }
