@@ -22,7 +22,7 @@
             android:gravity="center"
             android:padding="8dp"
             android:text="WELCOME"
-            android:textColor="#555555"
+            android:textColor="#00796B"
             android:textStyle="bold"
             android:textSize="11sp" />
 
@@ -46,7 +46,7 @@
             android:gravity="center"
             android:padding="8dp"
             android:text="DOWNLOAD"
-            android:textColor="#00796B"
+            android:textColor="#555555"
             android:textStyle="bold"
             android:textSize="11sp" />
 
@@ -74,31 +74,83 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <!-- TAB 1: WELCOME -->
+        <!-- TAB 1: WELCOME (PANDUAN LENGKAP) -->
         <ScrollView
             android:id="@+id/layout_welcome"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="gone"
-            android:padding="16dp">
+            android:visibility="visible"
+            android:padding="12dp">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
+
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="SP Flash Tool Mobile v1.0 Professional"
-                    android:textSize="16sp"
+                    android:text="SP Flash Tool Mobile v1.0"
+                    android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="#00796B" />
+
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="Fitur Lengkap:\n- DOWNLOAD: Menulis firmware (.img) ke target.\n- FORMAT: Menghapus blok memori target.\n- READBACK: Backup/dump memori target ke file .img."
-                    android:textSize="13sp"
-                    android:textColor="#333333" />
+                    android:text="Panduan & Penggunaan Alat Flashing MediaTek"
+                    android:textSize="12sp"
+                    android:textColor="#666666"
+                    android:layout_marginBottom="12dp" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#CCCCCC"
+                    android:layout_marginBottom="12dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="1. Persiapan Sebelum Flashing:"
+                    android:textStyle="bold"
+                    android:textColor="#222222"
+                    android:textSize="13sp" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="• Aktifkan menu 'Koneksi OTG' di Pengaturan HP Pengirim.\n• Pastikan HP Target dalam kondisi MATI TOTAL (Power Off).\n• Siapkan file scatter (.txt) dan file image (.img) di memori HP pengirim."
+                    android:textSize="12sp"
+                    android:textColor="#444444"
+                    android:layout_marginBottom="12dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="2. Cara Flash Partisi (Misal: boot.img):"
+                    android:textStyle="bold"
+                    android:textColor="#222222"
+                    android:textSize="13sp" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="• Masuk ke tab DOWNLOAD.\n• Tekan 'SCATTER' lalu pilih file MT67xx_Android_scatter.txt.\n• Cari baris partisi 'boot' di tabel, klik 'Choose File', lalu pilih file boot.img milikmu.\n• Tekan tombol hijau 'START'.\n• Colokkan kabel USB OTG ke HP Target sambil menahan tombol Vol (+) atau Vol (-)."
+                    android:textSize="12sp"
+                    android:textColor="#444444"
+                    android:layout_marginBottom="12dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="3. Fungsi Tab Lainnya:"
+                    android:textStyle="bold"
+                    android:textColor="#222222"
+                    android:textSize="13sp" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="• FORMAT: Menghapus blok memori target.\n• READBACK: Backup/dump memori target ke file .img di HP pengirim."
+                    android:textSize="12sp"
+                    android:textColor="#444444" />
             </LinearLayout>
         </ScrollView>
 
@@ -141,7 +193,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:visibility="visible">
+            android:visibility="gone">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -271,7 +323,7 @@
         </LinearLayout>
     </FrameLayout>
 
-    <!-- Tombol Eksekusi Utam (START & STOP) -->
+    <!-- Tombol START & STOP -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
