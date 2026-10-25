@@ -22,7 +22,7 @@
             android:textStyle="bold"
             android:textColor="#00E676" />
         <TextView
-            android:id="@+id/tv_device_status"
+            android:id="@+id/tv_status_log"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="DISCONNECTED"
@@ -38,7 +38,7 @@
         android:layout_marginTop="8dp"
         android:weightSum="4">
         <Button
-            android:id="@+id/tab_welcome"
+            android:id="@+id/tv_tab_welcome"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"
@@ -47,7 +47,7 @@
             android:backgroundTint="#00796B"
             android:textColor="#FFFFFF" />
         <Button
-            android:id="@+id/tab_format"
+            android:id="@+id/tv_tab_format"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"
@@ -56,7 +56,7 @@
             android:backgroundTint="#37474F"
             android:textColor="#FFFFFF" />
         <Button
-            android:id="@+id/tab_download"
+            android:id="@+id/tv_tab_download"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"
@@ -65,7 +65,7 @@
             android:backgroundTint="#37474F"
             android:textColor="#FFFFFF" />
         <Button
-            android:id="@+id/tab_readback"
+            android:id="@+id/tv_tab_readback"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"
@@ -84,7 +84,7 @@
         android:padding="12dp">
 
         <ScrollView
-            android:id="@+id/layout_tab_welcome"
+            android:id="@+id/layout_welcome"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:visibility="visible">
@@ -110,7 +110,7 @@
         </ScrollView>
 
         <LinearLayout
-            android:id="@+id/layout_tab_format"
+            android:id="@+id/layout_format"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
@@ -125,41 +125,97 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/layout_tab_download"
+            android:id="@+id/layout_download"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
             android:visibility="gone">
+            <EditText
+                android:id="@+id/et_scatter_path"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Scatter File Path"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp" />
             <Button
-                android:id="@+id/btn_start_flash"
+                android:id="@+id/btn_choose_scatter"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="PILIH SCATTER"
+                android:backgroundTint="#00796B"
+                android:textColor="#FFFFFF" />
+            <EditText
+                android:id="@+id/et_da_path"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="DA File Path"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:layout_marginTop="8dp" />
+            <Button
+                android:id="@+id/btn_choose_da"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="PILIH DA CUSTOM"
+                android:backgroundTint="#00796B"
+                android:textColor="#FFFFFF" />
+            <LinearLayout
+                android:id="@+id/container_partitions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+            <Button
+                android:id="@+id/btn_download"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="START FLASHING"
                 android:backgroundTint="#2E7D32"
+                android:textColor="#FFFFFF"
+                android:layout_marginTop="8dp" />
+            <Button
+                android:id="@+id/btn_stop"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="STOP"
+                android:backgroundTint="#D32F2F"
                 android:textColor="#FFFFFF" />
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/layout_tab_readback"
+            android:id="@+id/layout_readback"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
             android:visibility="gone">
-            <Button
-                android:id="@+id/btn_start_readback"
+            <TextView
+                android:id="@+id/tv_readback_path"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="MULAI DUMP ROM"
+                android:text="Readback Path: -"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp" />
+            <Button
+                android:id="@+id/btn_select_readback_save"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="PILIH LOKASI PENYIMPANAN"
                 android:backgroundTint="#F57F17"
                 android:textColor="#FFFFFF" />
         </LinearLayout>
 
     </FrameLayout>
 
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp" />
+
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:layout_marginTop="8dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="4dp"
         android:background="#121212"
         android:padding="4dp">
         <TextView
