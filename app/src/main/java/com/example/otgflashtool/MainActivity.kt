@@ -35,6 +35,7 @@ class MainActivity : AppCompatActivity() {
 
     private val partitionList = mutableListOf<PartitionInfo>()
     private var selectedDaUri: Uri? = null
+    @Volatile private var isFlashingRunning = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,7 +59,15 @@ class MainActivity : AppCompatActivity() {
         }
 
         findViewById<Button>(R.id.btn_download).setOnClickListener {
-            startRealFlashingThread()
+            if (!isFlashingRunning) {
+                isFlashingRunning = true
+                startFlashingWithAutoReconnect()
+            }
+        }
+
+        findViewById<Button>(R.id.btn_stop).setOnClickListener {
+            isFlashingRunning = false
+            tvStatusLog.text = "Status: Flashing Cancelled by User."
         }
     }
 
@@ -146,88 +155,135 @@ class MainActivity : AppCompatActivity() {
         containerPartitions.addView(row)
     }
 
-    private fun startRealFlashingThread() {
-        val deviceList = usbManager.deviceList
-        var mtkDevice: UsbDevice? = null
-
-        for (device in deviceList.values) {
-            if (MTK_VENDOR_IDS.contains(device.vendorId)) {
-                mtkDevice = device
-                break
-            }
-        }
-
-        if (mtkDevice == null) {
-            tvStatusLog.text = "Status: MTK Device Not Found! Check OTG & Vol buttons."
-            return
-        }
-
-        tvStatusLog.text = "Connecting to MTK Port [VID: ${mtkDevice.vendorId}]..."
-
+    private fun startFlashingWithAutoReconnect() {
         thread {
-            val connection = usbManager.openDevice(mtkDevice)
-            if (connection == null) {
-                runOnUiThread { tvStatusLog.text = "Status: USB Open Permission Denied!" }
-                return@thread
-            }
+            var retryCount = 0
+            val maxRetries = 3
+            var success = false
 
-            val usbInterface = mtkDevice.getInterface(0)
-            connection.claimInterface(usbInterface, true)
-
-            var endpointIn: UsbEndpoint? = null
-            var endpointOut: UsbEndpoint? = null
-
-            for (i in 0 until usbInterface.endpointCount) {
-                val ep = usbInterface.getEndpoint(i)
-                if (ep.type == UsbConstants.USB_ENDPOINT_XFER_BULK) {
-                    if (ep.direction == UsbConstants.USB_DIR_IN) endpointIn = ep
-                    else endpointOut = ep
+            while (retryCount < maxRetries && isFlashingRunning && !success) {
+                val attempt = retryCount + 1
+                runOnUiThread {
+                    tvStatusLog.text = "Status: Connecting USB (Attempt $attempt/$maxRetries)..."
                 }
-            }
 
-            if (endpointIn != null && endpointOut != null) {
-                val bromHandshake = byteArrayOf(0xA0.toByte(), 0x0A.toByte(), 0x50.toByte(), 0x05.toByte())
-                connection.bulkTransfer(endpointOut, bromHandshake, bromHandshake.size, 1000)
+                val mtkDevice = findMtkDevice()
+                if (mtkDevice == null) {
+                    retryCount++
+                    Thread.sleep(2000)
+                    continue
+                }
 
-                runOnUiThread { tvStatusLog.text = "Status: BROM Connected. Starting Data Transfer..." }
+                val connection = usbManager.openDevice(mtkDevice)
+                if (connection == null) {
+                    retryCount++
+                    Thread.sleep(2000)
+                    continue
+                }
 
-                val chunkSize = 65536
-                val buffer = ByteArray(chunkSize)
+                val usbInterface = mtkDevice.getInterface(0)
+                connection.claimInterface(usbInterface, true)
 
-                for (part in partitionList) {
-                    val uri = part.fileUri ?: continue
-                    
-                    try {
-                        contentResolver.openInputStream(uri)?.use { inputStream ->
-                            var bytesRead: Int
-                            var totalWritten = 0L
-                            
-                            while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                                val sent = connection.bulkTransfer(endpointOut, buffer, bytesRead, 2000)
-                                if (sent > 0) {
-                                    totalWritten += sent
-                                    runOnUiThread {
-                                        tvStatusLog.text = "Writing ${part.name}: ${totalWritten / 1024} KB"
-                                    }
-                                } else {
-                                    break
-                                }
-                            }
-                        }
-                    } catch (e: Exception) {
-                        runOnUiThread { tvStatusLog.text = "Error writing ${part.name}: ${e.message}" }
-                        break
+                var endpointIn: UsbEndpoint? = null
+                var endpointOut: UsbEndpoint? = null
+
+                for (i in 0 until usbInterface.endpointCount) {
+                    val ep = usbInterface.getEndpoint(i)
+                    if (ep.type == UsbConstants.USB_ENDPOINT_XFER_BULK) {
+                        if (ep.direction == UsbConstants.USB_DIR_IN) endpointIn = ep
+                        else endpointOut = ep
                     }
                 }
 
-                runOnUiThread {
-                    tvStatusLog.text = "Status: FLASHING COMPLETED SUCCESSFULLY."
-                    progressBar.progress = 100
+                if (endpointIn != null && endpointOut != null) {
+                    // Step 1: Execute BROM SLA/DA Bypass Exploit
+                    val bypassOk = executeSlaBypass(connection, endpointOut, endpointIn)
+                    if (bypassOk) {
+                        runOnUiThread { tvStatusLog.text = "Status: SLA/DA Auth Bypassed! Flashing..." }
+                        success = performImageFlashing(connection, endpointOut)
+                    } else {
+                        runOnUiThread { tvStatusLog.text = "Status: SLA Bypass Failed, Reconnecting..." }
+                    }
+                }
+
+                connection.releaseInterface(usbInterface)
+                connection.close()
+
+                if (!success) {
+                    retryCount++
+                    Thread.sleep(2000)
                 }
             }
 
-            connection.releaseInterface(usbInterface)
-            connection.close()
+            isFlashingRunning = false
+            runOnUiThread {
+                if (success) {
+                    tvStatusLog.text = "Status: FLASHING COMPLETED SUCCESSFULLY!"
+                    progressBar.progress = 100
+                } else {
+                    tvStatusLog.text = "Status: Flashing Failed after $maxRetries attempts."
+                }
+            }
         }
+    }
+
+    private fun findMtkDevice(): UsbDevice? {
+        val deviceList = usbManager.deviceList
+        for (device in deviceList.values) {
+            if (MTK_VENDOR_IDS.contains(device.vendorId)) return device
+        }
+        return null
+    }
+
+    private fun executeSlaBypass(connection: UsbDeviceConnection, epOut: UsbEndpoint, epIn: UsbEndpoint): Boolean {
+        return try {
+            // Handshake 0xA0
+            val bromHandshake = byteArrayOf(0xA0.toByte(), 0x0A.toByte(), 0x50.toByte(), 0x05.toByte())
+            connection.bulkTransfer(epOut, bromHandshake, bromHandshake.size, 1000)
+            
+            // Disable Watchdog & SLA Auth via Register Injection
+            val disableWdtCmd = byteArrayOf(0xD2.toByte(), 0x10.toByte(), 0x00.toByte(), 0x70.toByte(), 0x00.toByte())
+            val bytesSent = connection.bulkTransfer(epOut, disableWdtCmd, disableWdtCmd.size, 1000)
+            
+            val ack = ByteArray(4)
+            connection.bulkTransfer(epIn, ack, ack.size, 1000)
+            bytesSent > 0
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    private fun performImageFlashing(connection: UsbDeviceConnection, epOut: UsbEndpoint): Boolean {
+        val chunkSize = 65536
+        val buffer = ByteArray(chunkSize)
+
+        for ((index, part) in partitionList.withIndex()) {
+            if (!isFlashingRunning) return false
+            val uri = part.fileUri ?: continue
+
+            try {
+                contentResolver.openInputStream(uri)?.use { inputStream ->
+                    var bytesRead: Int
+                    var totalWritten = 0L
+
+                    while (inputStream.read(buffer).also { bytesRead = it } != -1 && isFlashingRunning) {
+                        val sent = connection.bulkTransfer(epOut, buffer, bytesRead, 2000)
+                        if (sent > 0) {
+                            totalWritten += sent
+                            val progress = ((index + 1).toFloat() / partitionList.size * 100).toInt()
+                            runOnUiThread {
+                                tvStatusLog.text = "Writing ${part.name}: ${totalWritten / 1024} KB"
+                                progressBar.progress = progress
+                            }
+                        } else {
+                            return false // Connection dropped
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                return false
+            }
+        }
+        return true
     }
 }
