@@ -3,78 +3,161 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="8dp"
-    android:background="#E0E0E0">
+    android:background="#F0F0F0"
+    android:padding="8dp">
 
-    <HorizontalScrollView
+    <!-- Top Navigation Tabs (Identik SP Flash Tool PC) -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#D0D0D0">
+        android:orientation="horizontal"
+        android:background="#E0E0E0"
+        android:padding="4dp">
+
+        <TextView
+            android:id="@+id/tv_tab_welcome"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="WELCOME"
+            android:textColor="#00796B"
+            android:textStyle="bold"
+            android:textSize="11sp" />
+
+        <TextView
+            android:id="@+id/tv_tab_format"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="FORMAT"
+            android:textColor="#00796B"
+            android:textStyle="bold"
+            android:textSize="11sp" />
+
+        <TextView
+            android:id="@+id/tv_tab_download"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="DOWNLOAD"
+            android:textColor="#00796B"
+            android:textStyle="bold"
+            android:textSize="11sp" />
+
+        <TextView
+            android:id="@+id/tv_tab_readback"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="READBACK"
+            android:textColor="#00796B"
+            android:textStyle="bold"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="#00796B" />
+
+    <!-- File Selection Box (DA, Scatter, Auth) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingTop="8dp">
+
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
-            <Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Welcome" style="?android:attr/buttonBarButtonStyle" />
-            <Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Format" style="?android:attr/buttonBarButtonStyle" />
-            <Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Download" android:textStyle="bold" style="?android:attr/buttonBarButtonStyle" />
-            <Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Readback" style="?android:attr/buttonBarButtonStyle" />
+            <EditText
+                android:id="@+id/et_da_path"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Download-Agent (DA File)"
+                android:textSize="12sp"
+                android:focusable="false" />
+            <Button
+                android:id="@+id/btn_choose_da"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DA FILE"
+                android:textSize="11sp" />
         </LinearLayout>
-    </HorizontalScrollView>
 
-    <!-- Column DA File Path -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="4dp">
-        <EditText
-            android:id="@+id/et_da_path"
-            android:layout_width="0dp"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="Download Agent (DA File)"
-            android:textSize="12sp"
-            android:focusable="false" />
-        <Button
-            android:id="@+id/btn_choose_da"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="DA File" />
+            android:orientation="horizontal">
+            <EditText
+                android:id="@+id/et_scatter_path"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Scatter-loading File"
+                android:textSize="12sp"
+                android:focusable="false" />
+            <Button
+                android:id="@+id/btn_choose_scatter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SCATTER"
+                android:textSize="11sp" />
+        </LinearLayout>
     </LinearLayout>
 
-    <!-- Column Scatter Path -->
+    <!-- Table Header (Persis SP Flash Tool) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="4dp">
-        <EditText
-            android:id="@+id/et_scatter_path"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="Scatter-loading File"
-            android:textSize="12sp"
-            android:focusable="false" />
-        <Button
-            android:id="@+id/btn_choose_scatter"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Scatter" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:background="#A0A0A0"
+        android:background="#808080"
         android:padding="4dp"
         android:layout_marginTop="8dp">
-        <TextView android:layout_width="30dp" android:layout_height="wrap_content" android:text="[x]" android:textStyle="bold" />
-        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Name" android:textStyle="bold" />
-        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Begin Address" android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="30dp"
+            android:layout_height="wrap_content"
+            android:text="[x]"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:textSize="10sp" />
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Name"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:textSize="10sp" />
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.2"
+            android:text="Begin Address"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:textSize="10sp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="File Location"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:textSize="10sp" />
     </LinearLayout>
 
+    <!-- Partitions Container -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -87,11 +170,13 @@
             android:orientation="vertical" />
     </ScrollView>
 
+    <!-- Action Buttons (Download & Stop) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="8dp">
+        android:paddingTop="8dp">
+
         <Button
             android:id="@+id/btn_download"
             android:layout_width="0dp"
@@ -99,7 +184,9 @@
             android:layout_weight="1"
             android:text="DOWNLOAD"
             android:backgroundTint="#2E7D32"
-            android:textColor="#FFFFFF" />
+            android:textColor="#FFFFFF"
+            android:textStyle="bold" />
+
         <Button
             android:id="@+id/btn_stop"
             android:layout_width="0dp"
@@ -107,25 +194,26 @@
             android:layout_weight="1"
             android:text="STOP"
             android:backgroundTint="#C62828"
-            android:textColor="#FFFFFF" />
+            android:textColor="#FFFFFF"
+            android:textStyle="bold" />
     </LinearLayout>
 
+    <!-- Progress & Status Log -->
     <ProgressBar
         android:id="@+id/progress_bar"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
         android:max="100"
-        android:progress="0" />
+        android:progress="0"
+        android:layout_marginTop="4dp" />
 
     <TextView
         android:id="@+id/tv_status_log"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Status: BROM Disconnected"
-        android:textSize="11sp"
+        android:padding="4dp"
+        android:text="Status: MTK Device Not Found! Check OTG Connection."
         android:textColor="#333333"
-        android:padding="4dp" />
-
+        android:textSize="11sp" />
 </LinearLayout>
