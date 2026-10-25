@@ -20,6 +20,9 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Generate Gradle Wrapper on Cloud
+        run: gradle wrapper
+
       - name: Grant Execute Permission for Gradle Wrapper
         run: chmod +x gradlew
 
